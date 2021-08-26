@@ -21,6 +21,10 @@ ALLOWED_HOSTS = ["localhost", "127.0.0.1"]
 # Application definition
 
 INSTALLED_APPS = [
+    
+    'transcriptmgmt.apps.TranscriptmgmtConfig',
+    'editmgmt.apps.EditmgmtConfig',
+    'usermgmt.apps.UsermgmtConfig',
     'django.contrib.admin',
     'django.contrib.auth',
     'django.contrib.contenttypes',
