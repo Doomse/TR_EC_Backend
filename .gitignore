@@ -1,0 +1,26 @@
+.DS_Store
+.idea
+.coverage
+.vscode/
+db.sqlite3
+__pycache__/
+migrations/
+#media/
+static/
+htmlcov/
+*.pyc
+logfile.log
+debug.py
+localsettings.py
+venv/
+
+# room for various configurations
+conf/
+
+# google cloud setup
+.gcloudignore
+app.yaml
+main.py
+TEQST/requirements.txt
+www/
+
