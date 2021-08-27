@@ -1,6 +1,6 @@
-# TEQST Backend Server
+# TR_EC Backend Server
 
-This is the Backend for [TEQST](https://github.com/TEQST/TEQST)
+This is the Backend for TR_EC, the TRanscription Edit and Correction tool.
 
 ## Setup
 ### Create a new virtual environment
