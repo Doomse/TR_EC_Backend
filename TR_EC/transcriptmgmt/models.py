@@ -2,6 +2,7 @@ from django.db import models, transaction
 from django.core.files import base
 from django.core.files.storage import default_storage
 from django.contrib import auth
+from django.db.models import constraints
 from . import utils
 from usermgmt import models as user_models
 import zipfile, re
@@ -68,7 +69,7 @@ class Folder(models.Model):
         #default_storage.save(str(sf_path/'log.txt'), logfile)
         return sf
 
-
+"""
 def stm_upload_path(instance, filename):
     sf_path = instance.get_path()
     title = re.sub(r"[\- ]", "_", instance.name)
@@ -79,7 +80,7 @@ def stm_upload_path(instance, filename):
 def log_upload_path(instance, filename):
     sf_path = instance.get_path()
     return f'{sf_path}/log.txt'
-
+"""
 
 class SharedFolder(Folder):
     editor = models.ManyToManyField(auth.get_user_model(), related_name='sharedfolder', blank=True)
@@ -103,7 +104,7 @@ class SharedFolder(Folder):
         return path
     
 
-def upload_path(instance, filename):
+def tr_upload_path(instance, filename):
     """
     Generates the upload path for a text
     """
@@ -111,3 +112,50 @@ def upload_path(instance, filename):
     path = sf_path/filename
     return path
 
+class Transcription(models.Model):
+
+    title = models.CharField(max_length=100)
+    shared_folder = models.ForeignKey(SharedFolder, on_delete=models.CASCADE, related_name='transcription')
+
+    audiofile = models.FileField(upload_to=tr_upload_path)
+    trfile = models.FileField(upload_to=tr_upload_path)  # text + timestamps as json
+
+    class Meta:
+        ordering = ['shared_folder', 'title']
+        constraints = [
+            models.UniqueConstraint(fields=['title', 'shared_folder'], name='unique_tr'),
+        ]
+    
+    def __str__(self) -> str:
+        return self.title
+    
+    def save(self, *args, **kwargs):
+        super().save(*args, **kwargs)
+        if not self.phrases.exists():
+            self.create_phrases()
+    
+    def get_content(self):
+        pass
+    
+    def create_phrases(self):
+        # TODO define a format for the timestamps and create phrases
+        pass
+    
+    # TODO create methods for permissions???
+
+
+class Phrase(models.Model):
+    transcription = models.ForeignKey(Transcription, on_delete=models.CASCADE, related_name='phrases')
+    content = models.CharField(max_length=500)
+    index = models.IntegerField()
+    start = models.FloatField()
+    end = models.FloatField()
+
+    class Meta:
+        ordering = ['transcription', 'index']
+        constraints = [
+            models.UniqueConstraint(fields=['transcription', 'index'], name='unique_phrase')
+        ]
+    
+    def __str__(self) -> str:
+        return str(self.index) + ": " + self.content

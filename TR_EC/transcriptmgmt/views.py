@@ -1,3 +1,4 @@
+from django.views import generic
 from rest_framework import generics, response, status, views, exceptions, decorators, permissions as rf_permissions
 from django import http
 from django.db.models import Q
@@ -13,6 +14,14 @@ def multi_delete_folders(request):
     result, _ = request.user.folder.filter(id__in=request.data).delete()
     if result == 0:
         raise exceptions.NotFound('No folders matched your list of ids')
+    return response.Response(status=204)
+
+@decorators.api_view(['POST'])
+@decorators.permission_classes([rf_permissions.IsAuthenticated, permissions.IsPublisher])
+def multi_delete_transcriptions(request):
+    result, _ = models.Transcription.objects.filter(shared_folder__owner=request.user, id__in=request.data).delete()
+    if result == 0:
+        raise exceptions.NotFound('No Transcriptions matched your list of ids')
     return response.Response(status=204)
 
 
@@ -60,6 +69,69 @@ class PubSharedFolderEditorView(generics.RetrieveUpdateAPIView):
     queryset = models.SharedFolder.objects.all()
     serializer_class = serializers.SharedFolderEditorSerializer
     permission_classes = [rf_permissions.IsAuthenticated, permissions.IsPublisher, permissions.IsOwner]
+
+
+class PubTranscriptListView(generics.ListCreateAPIView):
+    """
+    url: api/pub/transcripts/?sharedfolder=123
+    use: in the pub tab: retrieve a list of transcripts contained in a sharedfolder, transcript upload
+    """
+    queryset = models.Transcription.objects.all()
+    serializer_class = serializers.TranscriptionBasicSerializer
+    permission_classes = [rf_permissions.IsAuthenticated, permissions.IsPublisher]
+
+    def get_queryset(self):
+        user = self.request.user
+        if 'sharedfolder' in self.request.query_params:
+            try:
+                if not models.SharedFolder.objects.filter(pk=self.request.query_params['sharedfolder'], owner=user).exists():
+                    raise exceptions.NotFound("Invalid Sharedfolder id")
+                return models.Text.objects.filter(shared_folder=self.request.query_params['sharedfolder'])
+            except ValueError:
+                raise exceptions.NotFound("Invalid sharedfolder id")
+        raise exceptions.NotFound("No sharedfolder specified")
+    
+    def get_serializer_class(self):
+        if self.request.method == 'POST':
+            return serializers.TranscriptionFullSerializer
+        return serializers.TranscriptionBasicSerializer
+
+
+class EditTranscriptListView(generics.RetrieveAPIView):
+    """
+    url: api/edt/sharedfolders/:id/
+    use: in edit tab: retrieve a sharedfolder with the transcriptions it contains
+    """
+    queryset = models.SharedFolder.objects.all()
+    serializer_class = serializers.EditSharedFolderTranscriptSerializer
+    permission_classes = [rf_permissions.IsAuthenticated, permissions.IsEditor]
+
+
+class PubTranscriptDetailedView(generics.RetrieveDestroyAPIView):
+    """
+    url: api/pub/transcripts/:id/
+    use: in pub tab: retrieve a transcription, transcription deletion
+    """
+    queryset = models.Transcription.objects.all()
+    serializer_class = serializers.TranscriptionFullSerializer
+    permission_classes = [rf_permissions.IsAuthenticated, permissions.IsPublisher, permissions.IsOwner]
+
+    # The following method is only copied from teqst. maybe it is indeed not needed.
+    # TODO maybe this method is not needed
+    def get_serializer_class(self):
+        if self.request.method == 'GET':
+            return serializers.TranscriptionFullSerializer
+        return serializers.TranscriptionBasicSerializer
+
+
+class EditTranscriptDetailedView(generics.RetrieveAPIView):
+    """
+    url: api/edt/transcripts/:id/
+    use: in edit tab: retrieve a transcription
+    """
+    queryset = models.Transcription.objects.all()
+    serializer_class = serializers.TranscriptionFullSerializer
+    permission_classes = [rf_permissions.IsAuthenticated, permissions.IsEditor]
 
 
 class EditPublisherListView(generics.ListAPIView):
