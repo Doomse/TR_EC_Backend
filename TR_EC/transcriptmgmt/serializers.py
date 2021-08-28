@@ -1,9 +1,10 @@
+from django.db.models import fields
 from rest_framework import serializers
 from . import models, utils
 from usermgmt import models as user_models, serializers as user_serializers
-from recordingmgmt import models as rec_models
+
 import django.core.files.uploadedfile as uploadedfile
-import chardet, math
+
 
 
 class FolderPKField(serializers.PrimaryKeyRelatedField):
@@ -76,6 +77,54 @@ class SharedFolderPKField(serializers.PrimaryKeyRelatedField):
         user = self.context['request'].user
         queryset = models.Folder.objects.filter(owner=user, subfolder=None)
         return queryset
+
+
+class TranscriptionFullSerializer(serializers.ModelSerializer):
+    """
+    to be used by view: PubTranscriptListView, PubTranscriptDetailedView, EditTranscriptDetailedView
+    for: transcription creation and retrieval
+    """
+    content = serializers.DictField(source='get_content', child=serializers.FloatField(), read_only=True)
+    shared_folder = SharedFolderPKField()
+
+    class Meta:
+        model = models.Transcription
+        fields = ['id', 'title', 'shared_folder', 'content', 'audiofile', 'trfile']
+        extra_kwargs = {'audiofile': {'write_only': True}, 'trfile': {'write_only': True}}
+    
+    def validate(self, data):
+        if models.Transcription.objects.filter(shared_folder=data['shared_folder'], title=data['title']).exists():
+            raise serializers.ValidationError("A Transcription with this title in this folder already exists")
+        return super().validate()
+    
+    def create(self, validated_data):
+        sf = validated_data['shared_folder']
+        sf = sf.make_shared_folder()
+        validated_data['shared_folder'] = sf
+        return super().create(validated_data)
+
+
+class TranscriptionBasicSerializer(serializers.ModelSerializer):
+    """
+    to be used by view: PubTranscriptListView
+    for: retrieval of a list of Transcriptions contained in a sharedfolder
+    """
+    class Meta:
+        model = models.Transcription
+        fields = ['id', 'title']
+
+
+class EditSharedFolderTranscriptSerializer(serializers.ModelSerializer):
+    """
+    to be used by view: EditTranscriptListView
+    for: retrieval of a list of Transcriptions contained in a sharedfolder
+    """
+    transcripts = TranscriptionBasicSerializer(read_only=True, many=True, source='transcription')
+
+    class Meta:
+        model = models.SharedFolder
+        fields = ['id', 'name', 'owner', 'transcripts']
+        read_only_fields = ['name', 'owner']
 
 
 class SharedFolderEditorSerializer(serializers.ModelSerializer):
