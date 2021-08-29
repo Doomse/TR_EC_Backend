@@ -2,8 +2,7 @@ from django import http
 from django.contrib import auth
 from rest_framework import status, exceptions, response, generics, decorators, permissions as rf_permissions
 from rest_framework.authtoken import models as token_models
-from . import permissions, models, serializers, countries, userstats
-import re
+from . import permissions, models, serializers
 
 
 class PubUserListView(generics.ListAPIView):

@@ -1,6 +1,7 @@
 from django.core import exceptions
-from rest_framework import generics, status, response, exceptions as rf_exceptions
+from rest_framework import generics, status, response, exceptions as rf_exceptions, permissions as rf_permissions
 from . import serializers, models
+from usermgmt import permissions
 from transcriptmgmt import models as transcript_models
 
 
@@ -12,9 +13,9 @@ class CorrectionView(generics.ListCreateAPIView):
     def get_queryset(self):
         user = self.request.user
         try:
-            transcript = transcript_models.Transcript.objects.get(id=self.request.query_params['transcript'], shared_folder__editor = user)
+            transcript = transcript_models.Transcription.objects.get(id=self.request.query_params['transcript'], shared_folder__editor = user)
             return models.Correction.objects.filter(transcript = transcript, editor = user)
-        except (KeyError, ValueError, exceptions.ObjectDoesNotExist):
+        except (KeyError, ValueError, models.Correction.DoesNotExist):
             raise rf_exceptions.ValidationError("Invalid text id")
 
     
@@ -31,6 +32,14 @@ class CorrectionView(generics.ListCreateAPIView):
             #response.status_code = status.HTTP_204_NO_CONTENT
             resp = response.Response(status=status.HTTP_204_NO_CONTENT)
         return resp
+
+
+class CorrectionUpdateView(generics.UpdateAPIView):
+
+    queryset = models.Correction.objects.all()
+    serializer_class = serializers.CorrectionUpdateSerializer
+    permission_classes = [rf_permissions.IsAuthenticated, permissions.IsEditor]
+
 
 class EditView(generics.CreateAPIView):
 

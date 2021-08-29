@@ -1,5 +1,4 @@
 from django.core import exceptions
-from TR_EC.transcriptmgmt import models
 from rest_framework import serializers
 from . import models
 from transcriptmgmt import models as transcript_models
@@ -8,18 +7,31 @@ from transcriptmgmt import models as transcript_models
 class TranscriptPKField(serializers.PrimaryKeyRelatedField):
     def get_queryset(self):
         user = self.context['request'].user
-        queryset = transcript_models.Transcript.objects.filter(shared_folder__editor__id=user.id)
+        queryset = transcript_models.Transcription.objects.filter(shared_folder__editor__id=user.id)
         return queryset
 
 
 class CorrectionSerializer(serializers.ModelSerializer):
 
     transcript = TranscriptPKField()
+    content = serializers.ListField(source='get_meta_content', read_only=True)
 
     class Meta:
         model = models.Correction
-        fields = ['id', 'editor', 'transcript', 'active_sentence']
-        read_only_fields = ['editor']
+        fields = ['id', 'editor', 'content', 'transcript', 'active_phrase']
+        read_only_fields = ['editor', 'active_phrase']
+
+
+class CorrectionUpdateSerializer(serializers.ModelSerializer):
+
+    def validate_active_phrase(self, value):
+        if value <= self.instance.active_phrase:
+            raise serializers.ValidationError("The active phrase can only be increased")
+        return value
+
+    class Meta:
+        model = models.Correction
+        fields = ['id', 'active_phrase']
 
 
 class CorrectionPKField(serializers.PrimaryKeyRelatedField):

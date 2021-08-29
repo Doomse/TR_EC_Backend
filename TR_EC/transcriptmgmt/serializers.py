@@ -84,18 +84,18 @@ class TranscriptionFullSerializer(serializers.ModelSerializer):
     to be used by view: PubTranscriptListView, PubTranscriptDetailedView, EditTranscriptDetailedView
     for: transcription creation and retrieval
     """
-    content = serializers.DictField(source='get_content', child=serializers.FloatField(), read_only=True)
+    content = serializers.ListField(source='get_meta_content', read_only=True)
     shared_folder = SharedFolderPKField()
 
     class Meta:
         model = models.Transcription
-        fields = ['id', 'title', 'shared_folder', 'content', 'audiofile', 'trfile']
-        extra_kwargs = {'audiofile': {'write_only': True}, 'trfile': {'write_only': True}}
+        fields = ['id', 'title', 'shared_folder', 'content', 'srcfile', 'trfile']
+        extra_kwargs = {'srcfile': {'write_only': True}, 'trfile': {'write_only': True}}
     
     def validate(self, data):
         if models.Transcription.objects.filter(shared_folder=data['shared_folder'], title=data['title']).exists():
             raise serializers.ValidationError("A Transcription with this title in this folder already exists")
-        return super().validate()
+        return super().validate(data)
     
     def create(self, validated_data):
         sf = validated_data['shared_folder']
@@ -120,10 +120,11 @@ class EditSharedFolderTranscriptSerializer(serializers.ModelSerializer):
     for: retrieval of a list of Transcriptions contained in a sharedfolder
     """
     transcripts = TranscriptionBasicSerializer(read_only=True, many=True, source='transcription')
+    path = serializers.CharField(read_only=True, source='get_readable_path')
 
     class Meta:
         model = models.SharedFolder
-        fields = ['id', 'name', 'owner', 'transcripts']
+        fields = ['id', 'name', 'owner', 'transcripts', 'path']
         read_only_fields = ['name', 'owner']
 
 
@@ -137,7 +138,7 @@ class SharedFolderEditorSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = models.SharedFolder
-        fields = ['id', 'name', 'editors', 'editor_ids', 'public']
+        fields = ['id', 'name', 'editors', 'editor_ids']
         read_only_fields = ['name']
         depth = 1
 

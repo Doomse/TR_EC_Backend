@@ -117,7 +117,7 @@ STATIC_ROOT = BASE_DIR/'static'
 MEDIA_ROOT = BASE_DIR/'media'
 MEDIA_URL = '/media/'
 
-#AUTH_USER_MODEL = 'usermgmt.CustomUser'
+AUTH_USER_MODEL = 'usermgmt.CustomUser'
 
 REST_FRAMEWORK = {
     'DEFAULT_PERMISSION_CLASSES': [

@@ -19,11 +19,15 @@ urlpatterns = [
 
     path('sharedfolders/<int:pk>/', views.PubSharedFolderEditorView.as_view(), name='sharedfolder-editors'),
 
+    path('pub/sharedfolders/<int:pk>/download/', views.PubSharedFolderDownloadView.as_view(), name='sharedfolder-download'),
+
     path('pub/transcripts/<int:pk>/', views.PubTranscriptDetailedView.as_view(), name='pub-transcript-detail'),
 
     path('pub/transcripts/delete/', views.multi_delete_transcriptions, name='transcript-multi-delete'),
 
     path('edt/transcripts/<int:pk>/', views.EditTranscriptDetailedView.as_view(), name='edt-transcript-detail'),
+
+    path('transcripts/<int:pk>/download/', views.EditTranscriptDownloadView.as_view(), name='transcript-download'),
 
     
 ]

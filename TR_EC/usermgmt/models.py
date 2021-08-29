@@ -1,7 +1,6 @@
 from django.db import models, transaction
 from django.contrib import auth
 from django.contrib.auth import models as auth_models
-from . import utils, storages, countries
 
 
 class CustomUser(auth_models.AbstractUser):

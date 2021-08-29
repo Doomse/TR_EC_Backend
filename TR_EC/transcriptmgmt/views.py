@@ -168,3 +168,27 @@ class EditPublisherDetailedView(generics.RetrieveAPIView):
             return pub
         raise exceptions.PermissionDenied('This publisher has not shared any folders with you as editor.')
 
+
+class PubSharedFolderDownloadView(generics.RetrieveAPIView):
+
+    queryset = models.SharedFolder.objects.all()
+    serializer_class = serializers.EditSharedFolderTranscriptSerializer #Any serializer that identifies SharedFolders would be possible here
+    permission_classes = [rf_permissions.IsAuthenticated, permissions.IsPublisher, permissions.IsOwner]
+
+    def get(self, request, *args, **kwargs):
+        instance = self.get_object()
+        zip_path = instance.create_zip_for_download()
+        resp = http.FileResponse(default_storage.open(zip_path, 'rb'), as_attachment=True, filename='download.zip')
+        return resp
+
+
+class EditTranscriptDownloadView(generics.RetrieveAPIView):
+
+    queryset = models.Transcription.objects.all()
+    serializer_class = serializers.TranscriptionBasicSerializer #Any serializer that identifies SharedFolders would be possible here
+    permission_classes = [rf_permissions.IsAuthenticated, permissions.IsEditor | permissions.IsOwner]
+
+    def get(self, request, *args, **kwargs):
+        instance = self.get_object()
+        resp = http.FileResponse(instance.srcfile.open('rb'))
+        return resp

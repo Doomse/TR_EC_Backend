@@ -1,6 +1,5 @@
 from rest_framework import serializers
-from . import utils, models
-import datetime
+from . import models
 
 
 class UserFullSerializer(serializers.ModelSerializer):
