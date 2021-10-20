@@ -4,11 +4,14 @@ from . import models
 
 class UserFullSerializer(serializers.ModelSerializer):
     '''
-    Is used to retrieve a list of all users
+    
     '''
+    # same name as model function
+    is_publisher = serializers.BooleanField(read_only=True)
+
     class Meta():
         model = models.CustomUser
-        fields = ['id', 'username', 'email']
+        fields = ['id', 'username', 'is_publisher']
         read_only_fields = ['id', 'username']
 
 
@@ -18,8 +21,8 @@ class UserBasicSerializer(serializers.ModelSerializer):
     '''
     class Meta():
         model = models.CustomUser
-        fields = ['id', 'username', 'email']
-        read_only_fields = ['id', 'username', 'email']
+        fields = ['id', 'username']
+        read_only_fields = ['id', 'username']
 
 
 class UserRegisterSerializer(serializers.ModelSerializer):
@@ -28,5 +31,9 @@ class UserRegisterSerializer(serializers.ModelSerializer):
     '''
     class Meta():
         model = models.CustomUser
-        fields = ['id', 'username', 'password', 'email']
+        fields = ['id', 'username', 'password']
         extra_kwargs = {'password': {'write_only': True, 'required': True}}
+    
+    def create(self, validated_data):
+        user = models.CustomUser.objects.create_user(**validated_data)
+        return user

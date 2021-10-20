@@ -1,4 +1,5 @@
 from django.core import exceptions
+from django import http
 from rest_framework import generics, status, response, exceptions as rf_exceptions, permissions as rf_permissions
 from . import serializers, models
 from usermgmt import permissions
@@ -8,13 +9,13 @@ from transcriptmgmt import models as transcript_models
 class CorrectionView(generics.ListCreateAPIView):
 
     queryset = models.Correction.objects.all()
-    serializer_class = serializers.CorrectionSerializer
+    serializer_class = serializers.CorrectionCreateSerializer
 
     def get_queryset(self):
         user = self.request.user
         try:
-            transcript = transcript_models.Transcription.objects.get(id=self.request.query_params['transcript'], shared_folder__editor = user)
-            return models.Correction.objects.filter(transcript = transcript, editor = user)
+            transcription = transcript_models.Transcription.objects.get(id=self.request.query_params['transcript'], shared_folder__editor = user)
+            return models.Correction.objects.filter(transcription = transcription, editor = user)
         except (KeyError, ValueError, models.Correction.DoesNotExist):
             raise rf_exceptions.ValidationError("Invalid text id")
 
@@ -34,14 +35,26 @@ class CorrectionView(generics.ListCreateAPIView):
         return resp
 
 
-class CorrectionUpdateView(generics.UpdateAPIView):
+class CorrectionUpdateView(generics.RetrieveUpdateAPIView):
 
     queryset = models.Correction.objects.all()
-    serializer_class = serializers.CorrectionUpdateSerializer
+    serializer_class = serializers.CorrectionSerializer
     permission_classes = [rf_permissions.IsAuthenticated, permissions.IsEditor]
 
 
-class EditView(generics.CreateAPIView):
+class CorrectionDownloadView(generics.RetrieveAPIView):
 
-    queryset = models.Edit.objects.all()
-    serializer_class = serializers.EditSerializer
+    queryset = models.Correction.objects.all()
+    serializer_class = serializers.CorrectionCreateSerializer # Any serializer that identifies SharedFolders would be possible here
+    permission_classes = [rf_permissions.IsAuthenticated, permissions.IsEditor | permissions.IsOwner]
+
+    def get(self, request, *args, **kwargs):
+        instance = self.get_object()
+        resp = http.FileResponse(instance.trfile.open('rb'))
+        return resp
+
+
+# class EditView(generics.CreateAPIView):
+
+#     queryset = models.Edit.objects.all()
+#     serializer_class = serializers.EditSerializer

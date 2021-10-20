@@ -86,7 +86,7 @@ class PubTranscriptListView(generics.ListCreateAPIView):
             try:
                 if not models.SharedFolder.objects.filter(pk=self.request.query_params['sharedfolder'], owner=user).exists():
                     raise exceptions.NotFound("Invalid Sharedfolder id")
-                return models.Text.objects.filter(shared_folder=self.request.query_params['sharedfolder'])
+                return models.Transcription.objects.filter(shared_folder=self.request.query_params['sharedfolder'])
             except ValueError:
                 raise exceptions.NotFound("Invalid sharedfolder id")
         raise exceptions.NotFound("No sharedfolder specified")
@@ -185,7 +185,7 @@ class PubSharedFolderDownloadView(generics.RetrieveAPIView):
 class EditTranscriptDownloadView(generics.RetrieveAPIView):
 
     queryset = models.Transcription.objects.all()
-    serializer_class = serializers.TranscriptionBasicSerializer #Any serializer that identifies SharedFolders would be possible here
+    serializer_class = serializers.TranscriptionBasicSerializer #Any serializer that identifies Transcripts would be possible here
     permission_classes = [rf_permissions.IsAuthenticated, permissions.IsEditor | permissions.IsOwner]
 
     def get(self, request, *args, **kwargs):

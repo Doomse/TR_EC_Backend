@@ -84,12 +84,12 @@ class TranscriptionFullSerializer(serializers.ModelSerializer):
     to be used by view: PubTranscriptListView, PubTranscriptDetailedView, EditTranscriptDetailedView
     for: transcription creation and retrieval
     """
-    content = serializers.ListField(source='get_meta_content', read_only=True)
+    #content = serializers.ListField(source='get_meta_content', read_only=True)
     shared_folder = SharedFolderPKField()
 
     class Meta:
         model = models.Transcription
-        fields = ['id', 'title', 'shared_folder', 'content', 'srcfile', 'trfile']
+        fields = ['id', 'title', 'shared_folder', 'srcfile', 'trfile']
         extra_kwargs = {'srcfile': {'write_only': True}, 'trfile': {'write_only': True}}
     
     def validate(self, data):
@@ -114,12 +114,26 @@ class TranscriptionBasicSerializer(serializers.ModelSerializer):
         fields = ['id', 'title']
 
 
+class EditTranscriptionInfoSerializer(serializers.ModelSerializer):
+    """
+    """
+    correction = serializers.SerializerMethodField()
+
+    class Meta:
+        model = models.Transcription
+        fields = ['id', 'title', 'correction']
+    
+    def get_correction(self, obj):
+        user = self.context['request'].user
+        return obj.get_correction_from(user)
+
+
 class EditSharedFolderTranscriptSerializer(serializers.ModelSerializer):
     """
     to be used by view: EditTranscriptListView
     for: retrieval of a list of Transcriptions contained in a sharedfolder
     """
-    transcripts = TranscriptionBasicSerializer(read_only=True, many=True, source='transcription')
+    transcripts = EditTranscriptionInfoSerializer(read_only=True, many=True, source='transcription')
     path = serializers.CharField(read_only=True, source='get_readable_path')
 
     class Meta:
