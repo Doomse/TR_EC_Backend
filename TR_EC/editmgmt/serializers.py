@@ -1,8 +1,10 @@
 from django.core import exceptions
+from django.core.files.uploadedfile import SimpleUploadedFile
 from django.db.models import fields
 from rest_framework import serializers
 from . import models
 from transcriptmgmt import models as transcript_models
+import json
 
 
 class TranscriptPKField(serializers.PrimaryKeyRelatedField):
@@ -40,11 +42,20 @@ class CorrectionSerializer(serializers.ModelSerializer):
     #         raise serializers.ValidationError("The active phrase can only be increased")
     #     return value
     content = serializers.JSONField(source='get_content', read_only=True)
+    transcription_title = serializers.SerializerMethodField()  # read-only by default
+    trfile_json = serializers.JSONField(binary=False, write_only=True)
 
     class Meta:
         model = models.Correction
-        fields = ['id', 'content', 'trfile']
-        extra_kwargs = {'trfile': {'write_only': True, 'required': True}}
+        fields = ['id', 'transcription_title', 'content', 'trfile_json'] 
+    
+    def get_transcription_title(self, obj):
+        return obj.transcription.title
+    
+    def update(self, instance, validated_data):
+        # put the json in a file
+        validated_data['trfile'] = SimpleUploadedFile("correction.json", bytes(json.dumps(validated_data.pop('trfile_json')), encoding='utf-8'), content_type='text/json')
+        return super().update(instance, validated_data)
 
 
 class CorrectionPKField(serializers.PrimaryKeyRelatedField):

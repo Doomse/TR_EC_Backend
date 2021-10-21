@@ -35,7 +35,7 @@ class CorrectionView(generics.ListCreateAPIView):
         return resp
 
 
-class CorrectionUpdateView(generics.RetrieveUpdateAPIView):
+class CorrectionRetrieveUpdateView(generics.RetrieveUpdateAPIView):
 
     queryset = models.Correction.objects.all()
     serializer_class = serializers.CorrectionSerializer
