@@ -109,7 +109,7 @@ class SharedFolder(Folder):
         with default_storage.open(zip_path, 'wb') as f:
             with zipfile.ZipFile(f, 'w') as zf:
                 for transcript in self.transcription.all():
-                    transcript.write_transcripts_to_zip(zf)
+                    transcript.write_to_zip(zf)
         return zip_path
                     
 
@@ -157,6 +157,13 @@ class Transcription(models.Model):
         super().save(*args, **kwargs)
         # if not self.phrases.exists():
         #     self.create_phrases()
+    
+    def write_to_zip(self, file: zipfile.ZipFile):
+        with self.trfile.open('rb') as tr_file:
+            file.writestr(self.title+'/original.json', tr_file.read())
+        for correction in self.correction.all():
+            with correction.trfile.open('rb') as tr_file:
+                file.writestr(self.title+'/correction_'+correction.editor.username+'.json', tr_file.read())
 
     # def phrase_count(self):
     #     return self.phrases.count()
