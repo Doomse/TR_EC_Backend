@@ -15,6 +15,8 @@ urlpatterns = [
     
     path('pub/transcripts/', views.PubTranscriptListView.as_view(), name='pub-transcripts'),
 
+    path('pub/transcripts/multiupload/', views.PubTranscriptMultiUploadView.as_view()), 
+
     path('edt/sharedfolders/<int:pk>/', views.EditTranscriptListView.as_view(), name='sharedfolder-detail'),
 
     path('sharedfolders/<int:pk>/', views.PubSharedFolderEditorView.as_view(), name='sharedfolder-editors'),

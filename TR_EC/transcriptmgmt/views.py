@@ -1,3 +1,5 @@
+from zipfile import ZipFile
+from django.http.response import HttpResponse
 from django.views import generic
 from rest_framework import generics, response, status, views, exceptions, decorators, permissions as rf_permissions
 from django import http
@@ -6,6 +8,7 @@ from django.core.files.storage import default_storage
 from . import models, serializers
 from usermgmt import models as user_models, permissions
 from pathlib import Path
+from .utils import create_transcriptions_from_zipfile
 
 
 @decorators.api_view(['POST'])
@@ -95,6 +98,27 @@ class PubTranscriptListView(generics.ListCreateAPIView):
         if self.request.method == 'POST':
             return serializers.TranscriptionFullSerializer
         return serializers.TranscriptionBasicSerializer
+
+
+class PubTranscriptMultiUploadView(views.APIView):
+    """
+    url: api/pub/transcripts/multiupload/
+    """
+    
+    permission_classes = [rf_permissions.IsAuthenticated, permissions.IsPublisher]
+
+    def post(self, request, *args, **kwargs):
+        # request.data['shared_folder'] is the sharedfolder
+        # type(request.FILES['zfile']) is django.core.files.uploadedfile.TemporaryUploadedFile
+        folder_id = request.data['shared_folder']
+        if not models.Folder.objects.filter(pk=folder_id, owner=request.user).exists():
+            raise exceptions.NotFound("Invalid Folder id")
+        folder = models.Folder.objects.get(pk=folder_id)
+        sharedfolder = folder.make_shared_folder()
+        zfile = ZipFile(request.FILES['zfile'], mode='r')
+        create_transcriptions_from_zipfile(sharedfolder, zfile)
+        return HttpResponse("worked", status=status.HTTP_200_OK)
+
 
 
 class EditTranscriptListView(generics.RetrieveAPIView):

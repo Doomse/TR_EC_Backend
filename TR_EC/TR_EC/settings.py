@@ -128,5 +128,7 @@ REST_FRAMEWORK = {
     ]
 }
 
+DATA_UPLOAD_MAX_MEMORY_SIZE = 2147483648  # 2GB
+
 #Leave this as far down in this file as possible. Only settings that rely on definitions in the localsettings file should go below this import
 from .localsettings import *
