@@ -85,11 +85,12 @@ class TranscriptionFullSerializer(serializers.ModelSerializer):
     for: transcription creation and retrieval
     """
     #content = serializers.ListField(source='get_meta_content', read_only=True)
+    content = serializers.JSONField(source='get_content', read_only=True)
     shared_folder = SharedFolderPKField()
 
     class Meta:
         model = models.Transcription
-        fields = ['id', 'title', 'shared_folder', 'srcfile', 'trfile']
+        fields = ['id', 'title', 'shared_folder', 'srcfile', 'trfile', 'content']
         extra_kwargs = {'srcfile': {'write_only': True}, 'trfile': {'write_only': True}}
     
     def validate(self, data):

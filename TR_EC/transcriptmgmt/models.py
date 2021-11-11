@@ -158,6 +158,9 @@ class Transcription(models.Model):
         # if not self.phrases.exists():
         #     self.create_phrases()
     
+    def get_content(self):
+        return json.load(self.trfile)
+    
     def write_to_zip(self, file: zipfile.ZipFile):
         with self.trfile.open('rb') as tr_file:
             file.writestr(self.title+'/original.json', tr_file.read())

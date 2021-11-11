@@ -1,5 +1,5 @@
 from zipfile import ZipFile
-from django.http.response import HttpResponse
+from django.http.response import HttpResponse, JsonResponse
 from django.views import generic
 from rest_framework import generics, response, status, views, exceptions, decorators, permissions as rf_permissions
 from django import http
@@ -117,7 +117,7 @@ class PubTranscriptMultiUploadView(views.APIView):
         sharedfolder = folder.make_shared_folder()
         zfile = ZipFile(request.FILES['zfile'], mode='r')
         create_transcriptions_from_zipfile(sharedfolder, zfile)
-        return HttpResponse("worked", status=status.HTTP_200_OK)
+        return JsonResponse({"detail": "Tasks uploaded."}, status=status.HTTP_201_CREATED)
 
 
 
