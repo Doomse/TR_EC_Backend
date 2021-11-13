@@ -154,7 +154,7 @@ class EditTranscriptDetailedView(generics.RetrieveAPIView):
     use: in edit tab: retrieve a transcription
     """
     queryset = models.Transcription.objects.all()
-    serializer_class = serializers.TranscriptionFullSerializer
+    serializer_class = serializers.EditTranscriptionInfoSerializer
     permission_classes = [rf_permissions.IsAuthenticated, permissions.IsEditor]
 
 
