@@ -5,6 +5,7 @@ from django.contrib import auth
 from django.db.models import constraints
 from . import utils
 from usermgmt import models as user_models
+#from editmgmt import models as edit_models
 import zipfile, re, json
 from pathlib import Path
 #from google.cloud.storage import Blob
@@ -108,7 +109,7 @@ class SharedFolder(Folder):
         with default_storage.open(zip_path, 'wb') as f:
             with zipfile.ZipFile(f, 'w') as zf:
                 for transcript in self.transcription.all():
-                    transcript.write_transcripts_to_zip(zf)
+                    transcript.write_to_zip(zf)
         return zip_path
                     
 
@@ -119,7 +120,7 @@ def tr_upload_path(instance, filename):
     Generates the upload path for a transcript
     """
     sf_path = Path(instance.shared_folder.sharedfolder.get_path())
-    path = sf_path/filename
+    path = sf_path/instance.title/filename
     return path
 
 class Transcription(models.Model):
@@ -136,6 +137,11 @@ class Transcription(models.Model):
             models.UniqueConstraint(fields=['title', 'shared_folder'], name='unique_tr'),
         ]
     
+    def get_correction_from(self, user):
+        if self.correction.filter(editor=user).exists():
+            return self.correction.get(editor=user).id
+        return None
+    
     def __str__(self) -> str:
         return self.title
     
@@ -149,66 +155,76 @@ class Transcription(models.Model):
 
     def save(self, *args, **kwargs):
         super().save(*args, **kwargs)
-        if not self.phrases.exists():
-            self.create_phrases()
-
-    def phrase_count(self):
-        return self.phrases.count()
+        # if not self.phrases.exists():
+        #     self.create_phrases()
     
     def get_content(self):
-        content = []
-        for phrase in self.phrases.all():
-            content.append(phrase.content)
-        return content
-
-    def get_meta_content(self):
-        content = []
-        for phrase in self.phrases.all():
-            content.append({
-                'index': phrase.index,
-                'content': phrase.content,
-                'start': phrase.start,
-                'end': phrase.end,
-            })
-        return content
-
-    def write_transcripts_to_zip(self, file: zipfile.ZipFile):
-        with self.srcfile.open('rb') as src_file:
-            file.writestr(self.srcfile.name.replace(self.shared_folder.get_path(), self.title), src_file.read())
-        file.writestr(self.title+'/original.txt', '\n'.join(self.get_content()))
+        return json.load(self.trfile)
+    
+    def write_to_zip(self, file: zipfile.ZipFile):
+        with self.trfile.open('rb') as tr_file:
+            file.writestr(self.title+'/original.json', tr_file.read())
         for correction in self.correction.all():
-            filename = 'by_' + correction.editor.username + '_'
-            if correction.active_phrase > self.phrase_count():
-                filename += 'completed'
-            else:
-                filename += '(' + str(correction.active_phrase) + '/' + self.phrase_count + ')'
-            filename += '.txt'
-            file.writestr(self.title+'/'+filename, '\n'.join(correction.get_content()))
+            with correction.trfile.open('rb') as tr_file:
+                file.writestr(self.title+'/correction_'+correction.editor.username+'.json', tr_file.read())
+
+    # def phrase_count(self):
+    #     return self.phrases.count()
+    
+    # def get_content(self):
+    #     content = []
+    #     for phrase in self.phrases.all():
+    #         content.append(phrase.content)
+    #     return content
+
+    # def get_meta_content(self):
+    #     content = []
+    #     for phrase in self.phrases.all():
+    #         content.append({
+    #             'index': phrase.index,
+    #             'content': phrase.content,
+    #             'start': phrase.start,
+    #             'end': phrase.end,
+    #         })
+    #     return content
+
+    # def write_transcripts_to_zip(self, file: zipfile.ZipFile):
+    #     with self.srcfile.open('rb') as src_file:
+    #         file.writestr(self.srcfile.name.replace(self.shared_folder.get_path(), self.title), src_file.read())
+    #     file.writestr(self.title+'/original.txt', '\n'.join(self.get_content()))
+    #     for correction in self.correction.all():
+    #         filename = 'by_' + correction.editor.username + '_'
+    #         if correction.active_phrase > self.phrase_count():
+    #             filename += 'completed'
+    #         else:
+    #             filename += '(' + str(correction.active_phrase) + '/' + self.phrase_count + ')'
+    #         filename += '.txt'
+    #         file.writestr(self.title+'/'+filename, '\n'.join(correction.get_content()))
 
     
-    def create_phrases(self):
-        with transaction.atomic():
-            if not self.phrases.exists():
-                #for now we assume the files to be basic json with dict keys start, end, content
-                with self.trfile.open('r') as json_file:
-                    data = json.load(json_file)
-                    for index, json_obj in enumerate(data):
-                        self.phrases.create(content=json_obj['content'], index=index+1, start=float(json_obj['start']), end=float(json_obj['end']))
+    # def create_phrases(self):
+    #     with transaction.atomic():
+    #         if not self.phrases.exists():
+    #             #for now we assume the files to be basic json with dict keys start, end, content
+    #             with self.trfile.open('r') as json_file:
+    #                 data = json.load(json_file)
+    #                 for index, json_obj in enumerate(data):
+    #                     self.phrases.create(content=json_obj['content'], index=index+1, start=float(json_obj['start']), end=float(json_obj['end']))
 
 
 
-class Phrase(models.Model):
-    transcription = models.ForeignKey(Transcription, on_delete=models.CASCADE, related_name='phrases')
-    content = models.CharField(max_length=500)
-    index = models.IntegerField()
-    start = models.FloatField()
-    end = models.FloatField()
+# class Phrase(models.Model):
+#     transcription = models.ForeignKey(Transcription, on_delete=models.CASCADE, related_name='phrases')
+#     content = models.CharField(max_length=500)
+#     index = models.IntegerField()
+#     start = models.FloatField()
+#     end = models.FloatField()
 
-    class Meta:
-        ordering = ['transcription', 'index']
-        constraints = [
-            models.UniqueConstraint(fields=['transcription', 'index'], name='unique_phrase')
-        ]
+#     class Meta:
+#         ordering = ['transcription', 'index']
+#         constraints = [
+#             models.UniqueConstraint(fields=['transcription', 'index'], name='unique_phrase')
+#         ]
     
-    def __str__(self) -> str:
-        return self.transcription.title + " (" + str(self.index) + "): " + self.content
+#     def __str__(self) -> str:
+#         return self.transcription.title + " (" + str(self.index) + "): " + self.content

@@ -1,3 +1,5 @@
+from zipfile import ZipFile
+from django.http.response import HttpResponse, JsonResponse
 from django.views import generic
 from rest_framework import generics, response, status, views, exceptions, decorators, permissions as rf_permissions
 from django import http
@@ -6,6 +8,7 @@ from django.core.files.storage import default_storage
 from . import models, serializers
 from usermgmt import models as user_models, permissions
 from pathlib import Path
+from .utils import create_transcriptions_from_zipfile
 
 
 @decorators.api_view(['POST'])
@@ -86,7 +89,7 @@ class PubTranscriptListView(generics.ListCreateAPIView):
             try:
                 if not models.SharedFolder.objects.filter(pk=self.request.query_params['sharedfolder'], owner=user).exists():
                     raise exceptions.NotFound("Invalid Sharedfolder id")
-                return models.Text.objects.filter(shared_folder=self.request.query_params['sharedfolder'])
+                return models.Transcription.objects.filter(shared_folder=self.request.query_params['sharedfolder'])
             except ValueError:
                 raise exceptions.NotFound("Invalid sharedfolder id")
         raise exceptions.NotFound("No sharedfolder specified")
@@ -95,6 +98,27 @@ class PubTranscriptListView(generics.ListCreateAPIView):
         if self.request.method == 'POST':
             return serializers.TranscriptionFullSerializer
         return serializers.TranscriptionBasicSerializer
+
+
+class PubTranscriptMultiUploadView(views.APIView):
+    """
+    url: api/pub/transcripts/multiupload/
+    """
+    
+    permission_classes = [rf_permissions.IsAuthenticated, permissions.IsPublisher]
+
+    def post(self, request, *args, **kwargs):
+        # request.data['shared_folder'] is the sharedfolder
+        # type(request.FILES['zfile']) is django.core.files.uploadedfile.TemporaryUploadedFile
+        folder_id = request.data['shared_folder']
+        if not models.Folder.objects.filter(pk=folder_id, owner=request.user).exists():
+            raise exceptions.NotFound("Invalid Folder id")
+        folder = models.Folder.objects.get(pk=folder_id)
+        sharedfolder = folder.make_shared_folder()
+        zfile = ZipFile(request.FILES['zfile'], mode='r')
+        create_transcriptions_from_zipfile(sharedfolder, zfile)
+        return JsonResponse({"detail": "Tasks uploaded."}, status=status.HTTP_201_CREATED)
+
 
 
 class EditTranscriptListView(generics.RetrieveAPIView):
@@ -130,7 +154,7 @@ class EditTranscriptDetailedView(generics.RetrieveAPIView):
     use: in edit tab: retrieve a transcription
     """
     queryset = models.Transcription.objects.all()
-    serializer_class = serializers.TranscriptionFullSerializer
+    serializer_class = serializers.EditTranscriptionInfoSerializer
     permission_classes = [rf_permissions.IsAuthenticated, permissions.IsEditor]
 
 
@@ -185,7 +209,7 @@ class PubSharedFolderDownloadView(generics.RetrieveAPIView):
 class EditTranscriptDownloadView(generics.RetrieveAPIView):
 
     queryset = models.Transcription.objects.all()
-    serializer_class = serializers.TranscriptionBasicSerializer #Any serializer that identifies SharedFolders would be possible here
+    serializer_class = serializers.TranscriptionBasicSerializer #Any serializer that identifies Transcripts would be possible here
     permission_classes = [rf_permissions.IsAuthenticated, permissions.IsEditor | permissions.IsOwner]
 
     def get(self, request, *args, **kwargs):

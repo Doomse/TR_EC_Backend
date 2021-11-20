@@ -1,7 +1,7 @@
 from django import http
 from django.contrib import auth
 from rest_framework import status, exceptions, response, generics, decorators, permissions as rf_permissions
-from rest_framework.authtoken import models as token_models
+from rest_framework.authtoken import models as token_models, views as token_views
 from . import permissions, models, serializers
 
 
@@ -39,6 +39,34 @@ class UserRegisterView(generics.CreateAPIView):
     queryset = models.CustomUser.objects.all()
     serializer_class = serializers.UserRegisterSerializer
     permission_classes = []
+
+
+class GetAuthToken2(token_views.ObtainAuthToken):
+    """
+    This is the view used to log in a user (get his Authentication Token)
+    """
+    permission_classes = []
+
+    def post(self, request, *args, **kwargs):
+        resp = super(GetAuthToken2, self).post(request, *args, **kwargs)
+        token = token_models.Token.objects.get(key=resp.data['token'])
+        user = models.CustomUser.objects.get(id=token.user_id)
+        user_serializer = serializers.UserFullSerializer(user, many=False)
+        return response.Response({'token': token.key, 'user': user_serializer.data})
+
+
+class GetAuthToken(token_views.ObtainAuthToken):
+    permission_classes = []
+
+    def post(self, request, *args, **kwargs):
+        serializer = self.serializer_class(data=request.data,
+                                           context={'request': request})
+        serializer.is_valid(raise_exception=True)
+        user = serializer.validated_data['user']
+        token, created = token_models.Token.objects.get_or_create(user=user)
+        #return Response({'token': token.key})
+        user_serializer = serializers.UserFullSerializer(user, many=False)
+        return response.Response({'token': token.key, 'created': created, 'user': user_serializer.data}, status=status.HTTP_200_OK)
 
 
 @decorators.api_view(['POST'])
