@@ -87,10 +87,11 @@ class TranscriptionFullSerializer(serializers.ModelSerializer):
     #content = serializers.ListField(source='get_meta_content', read_only=True)
     content = serializers.JSONField(source='get_content', read_only=True)
     shared_folder = SharedFolderPKField()
+    format = serializers.CharField(write_only=True)
 
     class Meta:
         model = models.Transcription
-        fields = ['id', 'title', 'shared_folder', 'srcfile', 'trfile', 'content']
+        fields = ['id', 'title', 'shared_folder', 'srcfile', 'trfile', 'content', 'format']
         extra_kwargs = {'srcfile': {'write_only': True}, 'trfile': {'write_only': True}}
     
     def validate(self, data):
@@ -102,7 +103,10 @@ class TranscriptionFullSerializer(serializers.ModelSerializer):
         sf = validated_data['shared_folder']
         sf = sf.make_shared_folder()
         validated_data['shared_folder'] = sf
-        return super().create(validated_data)
+        format = validated_data.pop('format')
+        obj = super().create(validated_data)
+        utils.convert_tr_from_format(obj, format)
+        return obj
 
 
 class TranscriptionBasicSerializer(serializers.ModelSerializer):

@@ -1,9 +1,9 @@
-import os
+import os, json
 from django.conf import settings
+from django.core.files.base import ContentFile
 import zipfile
 from pathlib import Path
-import os
-from . import models
+from . import models, trformats
 
 NAME_ID_SPLITTER = '__'
 
@@ -20,13 +20,15 @@ def folder_relative_path(folder):
     return media_path
 
 
-def create_transcriptions_from_zipfile(sharedfolder: int, zfile: zipfile.ZipFile):
+def create_transcriptions_from_zipfile(sharedfolder: int, zfile: zipfile.ZipFile, format: str):
 
     def zinfo_endswith(zinfo: zipfile.ZipInfo, *formats):
         for format in formats:
             if zinfo.filename.endswith(format):
                 return True
         return False
+    
+    extension, _, _ = trformats.formats[format]
 
     sf = models.SharedFolder.objects.get(pk=sharedfolder)
     sf_path = Path(sf.get_path())
@@ -43,7 +45,7 @@ def create_transcriptions_from_zipfile(sharedfolder: int, zfile: zipfile.ZipFile
         _, tr_title, _ = zinfo.filename.split('/')
         # find zipinfo objects of src and tr file
         zinfo_src = list(filter(lambda x: tr_title in x.filename and zinfo_endswith(x, 'wav', 'mp3', 'mp4'), zinfo_list))[0]
-        zinfo_tr = list(filter(lambda x: tr_title in x.filename and zinfo_endswith(x, 'json'), zinfo_list))[0]
+        zinfo_tr = list(filter(lambda x: tr_title in x.filename and zinfo_endswith(x, extension), zinfo_list))[0]
         # removing the file zipinfos from zinfo_list dynamically,
         # so that the for loop effectively only loops over folder zipinfos.
         zinfo_list.remove(zinfo_src)
@@ -66,6 +68,19 @@ def create_transcriptions_from_zipfile(sharedfolder: int, zfile: zipfile.ZipFile
         new_transcription.trfile.name = str(path_base/zinfo_tr.filename)
         # save
         new_transcription.save()
+        # convert from format to trjson
+        convert_tr_from_format(new_transcription, format)
+
+
+def convert_tr_from_format(obj, format: str):
+    _, to_trjson, _ = trformats.formats[format]
+    content = ''
+    with obj.trfile.open() as f:
+        content = f.read().decode()
+    content_trjson = to_trjson(content)
+    # TODO delete the old file
+    obj.trfile = ContentFile(json.dumps(content_trjson), name='transcription.json')
+    obj.save()
 
 
 #Deprecated, since absolute paths aren't used anymore

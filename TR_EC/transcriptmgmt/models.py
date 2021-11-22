@@ -155,8 +155,6 @@ class Transcription(models.Model):
 
     def save(self, *args, **kwargs):
         super().save(*args, **kwargs)
-        # if not self.phrases.exists():
-        #     self.create_phrases()
     
     def get_content(self):
         return json.load(self.trfile)

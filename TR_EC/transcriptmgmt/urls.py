@@ -12,6 +12,8 @@ urlpatterns = [
     path('publishers/', views.EditPublisherListView.as_view(), name='publishers'),
 
     path('publishers/<int:pk>/', views.EditPublisherDetailedView.as_view(), name='publisher-detail'),
+
+    path('pub/transcripts/formats/', views.TranscriptionFormatView.as_view()),
     
     path('pub/transcripts/', views.PubTranscriptListView.as_view(), name='pub-transcripts'),
 

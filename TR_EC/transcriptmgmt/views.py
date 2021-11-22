@@ -5,7 +5,7 @@ from rest_framework import generics, response, status, views, exceptions, decora
 from django import http
 from django.db.models import Q
 from django.core.files.storage import default_storage
-from . import models, serializers
+from . import models, serializers, trformats
 from usermgmt import models as user_models, permissions
 from pathlib import Path
 from .utils import create_transcriptions_from_zipfile
@@ -74,6 +74,14 @@ class PubSharedFolderEditorView(generics.RetrieveUpdateAPIView):
     permission_classes = [rf_permissions.IsAuthenticated, permissions.IsPublisher, permissions.IsOwner]
 
 
+class TranscriptionFormatView(views.APIView):
+
+    permission_classes = [rf_permissions.IsAuthenticated, permissions.IsPublisher]
+
+    def get(self, request, *args, **kwargs):
+        return JsonResponse({"formats": list(trformats.formats.keys())}, status=status.HTTP_200_OK)
+
+
 class PubTranscriptListView(generics.ListCreateAPIView):
     """
     url: api/pub/transcripts/?sharedfolder=123
@@ -111,12 +119,13 @@ class PubTranscriptMultiUploadView(views.APIView):
         # request.data['shared_folder'] is the sharedfolder
         # type(request.FILES['zfile']) is django.core.files.uploadedfile.TemporaryUploadedFile
         folder_id = request.data['shared_folder']
+        tr_format = request.data['format']
         if not models.Folder.objects.filter(pk=folder_id, owner=request.user).exists():
             raise exceptions.NotFound("Invalid Folder id")
         folder = models.Folder.objects.get(pk=folder_id)
         sharedfolder = folder.make_shared_folder()
         zfile = ZipFile(request.FILES['zfile'], mode='r')
-        create_transcriptions_from_zipfile(sharedfolder, zfile)
+        create_transcriptions_from_zipfile(sharedfolder, zfile, tr_format)
         return JsonResponse({"detail": "Tasks uploaded."}, status=status.HTTP_201_CREATED)
 
 
