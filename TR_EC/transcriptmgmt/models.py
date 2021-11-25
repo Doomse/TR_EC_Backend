@@ -139,7 +139,7 @@ class Transcription(models.Model):
     
     def get_correction_from(self, user):
         if self.correction.filter(editor=user).exists():
-            return self.correction.get(editor=user).id
+            return self.correction.get(editor=user)
         return None
     
     def __str__(self) -> str:

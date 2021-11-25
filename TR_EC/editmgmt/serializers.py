@@ -37,17 +37,13 @@ class CorrectionCreateSerializer(serializers.ModelSerializer):
 
 class CorrectionSerializer(serializers.ModelSerializer):
 
-    # def validate_active_phrase(self, value):
-    #     if value <= self.instance.active_phrase:
-    #         raise serializers.ValidationError("The active phrase can only be increased")
-    #     return value
     content = serializers.JSONField(source='get_content', read_only=True)
     transcription_title = serializers.SerializerMethodField()  # read-only by default
     trfile_json = serializers.JSONField(binary=False, write_only=True)
 
     class Meta:
         model = models.Correction
-        fields = ['id', 'transcription_title', 'content', 'trfile_json'] 
+        fields = ['id', 'transcription_title', 'finished', 'content', 'trfile_json'] 
     
     def get_transcription_title(self, obj):
         return obj.transcription.title

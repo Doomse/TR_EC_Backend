@@ -123,14 +123,21 @@ class EditTranscriptionInfoSerializer(serializers.ModelSerializer):
     """
     """
     correction = serializers.SerializerMethodField()
+    finished = serializers.SerializerMethodField()
 
     class Meta:
         model = models.Transcription
-        fields = ['id', 'title', 'correction']
+        fields = ['id', 'title', 'correction', 'finished']
     
     def get_correction(self, obj):
         user = self.context['request'].user
-        return obj.get_correction_from(user)
+        correction = obj.get_correction_from(user)
+        return correction.id if correction is not None else correction
+    
+    def get_finished(self, obj):
+        user = self.context['request'].user
+        correction = obj.get_correction_from(user)
+        return correction.finished if correction is not None else False
 
 
 class EditSharedFolderTranscriptSerializer(serializers.ModelSerializer):

@@ -24,6 +24,7 @@ class Correction(models.Model):
     editor = models.ForeignKey(auth.get_user_model(), on_delete=models.CASCADE, related_name='correction')
     transcription = models.ForeignKey(transcript_models.Transcription, on_delete=models.CASCADE, related_name='correction')
     trfile = models.FileField(upload_to=correction_upload_path, storage=storages.OverwriteStorage())
+    finished = models.BooleanField(default=False)
 
     class Meta:
         ordering = ['transcription', 'editor']
