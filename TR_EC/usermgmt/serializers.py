@@ -25,15 +25,3 @@ class UserBasicSerializer(serializers.ModelSerializer):
         read_only_fields = ['id', 'username']
 
 
-class UserRegisterSerializer(serializers.ModelSerializer):
-    '''
-    Is used to retrieve a list of all users
-    '''
-    class Meta():
-        model = models.CustomUser
-        fields = ['id', 'username', 'password']
-        extra_kwargs = {'password': {'write_only': True, 'required': True}}
-    
-    def create(self, validated_data):
-        user = models.CustomUser.objects.create_user(**validated_data)
-        return user

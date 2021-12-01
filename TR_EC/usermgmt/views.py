@@ -31,67 +31,6 @@ class UserDetailedView(generics.RetrieveUpdateDestroyAPIView):
         return self.request.user
    
 
-class UserRegisterView(generics.CreateAPIView):
-    '''
-    Is used to register a new user to the system
-    Obviously no permission requirements
-    '''
-    queryset = models.CustomUser.objects.all()
-    serializer_class = serializers.UserRegisterSerializer
-    permission_classes = []
-
-
-class GetAuthToken2(token_views.ObtainAuthToken):
-    """
-    This is the view used to log in a user (get his Authentication Token)
-    """
-    permission_classes = []
-
-    def post(self, request, *args, **kwargs):
-        resp = super(GetAuthToken2, self).post(request, *args, **kwargs)
-        token = token_models.Token.objects.get(key=resp.data['token'])
-        user = models.CustomUser.objects.get(id=token.user_id)
-        user_serializer = serializers.UserFullSerializer(user, many=False)
-        return response.Response({'token': token.key, 'user': user_serializer.data})
-
-
-class GetAuthToken(token_views.ObtainAuthToken):
-    permission_classes = []
-
-    def post(self, request, *args, **kwargs):
-        serializer = self.serializer_class(data=request.data,
-                                           context={'request': request})
-        serializer.is_valid(raise_exception=True)
-        user = serializer.validated_data['user']
-        token, created = token_models.Token.objects.get_or_create(user=user)
-        #return Response({'token': token.key})
-        user_serializer = serializers.UserFullSerializer(user, many=False)
-        return response.Response({'token': token.key, 'created': created, 'user': user_serializer.data}, status=status.HTTP_200_OK)
-
-
-@decorators.api_view(['POST'])
-@decorators.permission_classes([])
-def login(request):
-    try:
-        username = request.data['username']
-        password = request.data['password']
-        user = auth.authenticate(username=username, password=password)
-        if not user:
-            raise exceptions.NotAuthenticated('Invalid credentials')
-        token, created = token_models.Token.objects.get_or_create(user=user)
-        user_serializer = serializers.UserFullSerializer(user, many=False)
-        return response.Response({'token': token.key, 'created': created, 'user': user_serializer.data}, status=status.HTTP_200_OK)
-    except KeyError:
-        raise exceptions.NotAuthenticated('No credentials provided')
-
-
-@decorators.api_view(['POST'])
-def logout(request):
-    token = request.auth 
-    token.delete()
-    return response.Response('Logout successful!', status=status.HTTP_200_OK)
-
-
 @decorators.api_view()
 @decorators.permission_classes([])
 def check_username(request):

@@ -1,5 +1,6 @@
 from django.urls import path
 from . import views
+from django_cas_ng import views as cas_views
 
 
 urlpatterns = [
@@ -11,7 +12,7 @@ urlpatterns = [
 #    path('countries/', views.country_list, name="countries"),
 #    path('accents/', views.accent_list, name="accents"),
 #    path('locale/<lang>', views.MenuLanguageView.as_view(), name="locale"),
-    path('auth/register/', views.UserRegisterView.as_view(), name="register"),
-    path('auth/login/', views.GetAuthToken.as_view(), name="login"),
-    path('auth/logout/', views.logout, name="logout")
+
+    path('auth/login/', cas_views.LoginView.as_view(), name='cas_ng_login'),
+    path('auth/logout/', cas_views.LogoutView.as_view(), name='cas_ng_logout'),
 ]
