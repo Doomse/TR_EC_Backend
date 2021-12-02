@@ -5,8 +5,11 @@ from rest_framework import generics, response, status, views, exceptions, decora
 from django import http
 from django.db.models import Q
 from django.core.files.storage import default_storage
+
+import editmgmt
 from . import models, serializers, trformats
 from usermgmt import models as user_models, permissions
+from editmgmt import models as edit_models
 from pathlib import Path
 from .utils import create_transcriptions_from_zipfile
 
@@ -165,6 +168,11 @@ class EditTranscriptDetailedView(generics.RetrieveAPIView):
     queryset = models.Transcription.objects.all()
     serializer_class = serializers.EditTranscriptionInfoSerializer
     permission_classes = [rf_permissions.IsAuthenticated, permissions.IsEditor]
+
+    def get_object(self):
+        obj = super().get_object()
+        edit_models.Correction.objects.create(editor=self.request.user, transcription=obj)
+        return obj
 
 
 class EditPublisherListView(generics.ListAPIView):
