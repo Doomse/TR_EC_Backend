@@ -11,6 +11,7 @@ https://docs.djangoproject.com/en/3.2/ref/settings/
 """
 
 from pathlib import Path
+from django.urls import reverse_lazy
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -131,13 +132,13 @@ REST_FRAMEWORK = {
 
 DATA_UPLOAD_MAX_MEMORY_SIZE = 2147483648  # 2GB
 
-LOGIN_URL = '/api/auth/login/'
+LOGIN_URL = reverse_lazy('cas_ng_login')
 
 AUTHENTICATION_BACKENDS = [
     'django_cas_ng.backends.CASBackend',
 ]
 
-CAS_REDIRECT_URL = '/'
+CAS_REDIRECT_URL = '/tr_ec/'
 
 CAS_VERSION = '3'
 
