@@ -13,6 +13,4 @@ urlpatterns = [
 #    path('accents/', views.accent_list, name="accents"),
 #    path('locale/<lang>', views.MenuLanguageView.as_view(), name="locale"),
 
-    path('auth/login/', cas_views.LoginView.as_view(), name='cas_ng_login'),
-    path('auth/logout/', cas_views.LogoutView.as_view(), name='cas_ng_logout'),
 ]
