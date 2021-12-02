@@ -171,7 +171,7 @@ class EditTranscriptDetailedView(generics.RetrieveAPIView):
 
     def get_object(self):
         obj = super().get_object()
-        edit_models.Correction.objects.create(editor=self.request.user, transcription=obj)
+        edit_models.Correction.objects.get_or_create(editor=self.request.user, transcription=obj)
         return obj
 
 
@@ -208,6 +208,13 @@ class EditPublisherDetailedView(generics.RetrieveAPIView):
         if user.sharedfolder.filter(owner=pub).exists():
             return pub
         raise exceptions.PermissionDenied('This publisher has not shared any folders with you as editor.')
+
+
+class PubSharedFolderStatsView(generics.RetrieveAPIView):
+
+    queryset = models.SharedFolder.objects.all()
+    serializer_class = serializers.SharedFolderStatsSerializer
+    permission_classes = [rf_permissions.IsAuthenticated, permissions.IsPublisher, permissions.IsOwner]
 
 
 class PubSharedFolderDownloadView(generics.RetrieveAPIView):

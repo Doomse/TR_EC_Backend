@@ -2,6 +2,7 @@ from django.db.models import fields
 from rest_framework import serializers
 from . import models, utils
 from usermgmt import models as user_models, serializers as user_serializers
+from editmgmt import models as edit_models
 
 import django.core.files.uploadedfile as uploadedfile
 
@@ -168,6 +169,28 @@ class SharedFolderEditorSerializer(serializers.ModelSerializer):
         read_only_fields = ['name']
         depth = 1
 
+
+class SharedFolderStatsSerializer(serializers.ModelSerializer):
+
+    numOfTexts = serializers.SerializerMethodField(read_only=True)
+    userstats = serializers.SerializerMethodField(read_only=True)
+
+    class Meta:
+        model = models.SharedFolder
+        fields = ['numOfTexts', 'userstats']
+    
+    def get_numOfTexts(self, obj):
+        return models.Transcription.objects.filter(shared_folder=obj).count()
+
+    def get_userstats(self, obj):
+        res = []
+        transcriptions = models.Transcription.objects.filter(shared_folder=obj)
+        for editor in obj.editor.all():
+            res.append({
+                "name": editor.username,
+                "finished": edit_models.Correction.objects.filter(editor=editor, transcription__in=transcriptions, finished=True).count()
+            })
+        return res
 
 class EditPublisherSerializer(serializers.ModelSerializer):
     """

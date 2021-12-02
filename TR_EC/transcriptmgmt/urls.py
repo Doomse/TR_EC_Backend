@@ -25,6 +25,8 @@ urlpatterns = [
 
     path('pub/sharedfolders/<int:pk>/download/', views.PubSharedFolderDownloadView.as_view(), name='sharedfolder-download'),
 
+    path('pub/sharedfolders/<int:pk>/stats/', views.PubSharedFolderStatsView.as_view()),
+
     path('pub/transcripts/<int:pk>/', views.PubTranscriptDetailedView.as_view(), name='pub-transcript-detail'),
 
     path('pub/transcripts/delete/', views.multi_delete_transcriptions, name='transcript-multi-delete'),
