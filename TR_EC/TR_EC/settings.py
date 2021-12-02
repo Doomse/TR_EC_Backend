@@ -32,10 +32,12 @@ INSTALLED_APPS = [
     'django.contrib.messages',
     'django.contrib.staticfiles',
     'rest_framework',
-    'rest_framework.authtoken'
+    'rest_framework.authtoken',
+    'corsheaders',
 ]
 
 MIDDLEWARE = [
+    'corsheaders.middleware.CorsMiddleware',
     'django.middleware.security.SecurityMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
@@ -129,6 +131,8 @@ REST_FRAMEWORK = {
 }
 
 DATA_UPLOAD_MAX_MEMORY_SIZE = 2147483648  # 2GB
+
+CORS_ALLOW_ALL_ORIGINS = True
 
 #Leave this as far down in this file as possible. Only settings that rely on definitions in the localsettings file should go below this import
 from .localsettings import *
