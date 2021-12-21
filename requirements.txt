@@ -2,7 +2,7 @@ asgiref==3.4.1
 certifi==2021.10.8
 charset-normalizer==2.0.8
 Django==3.2.6
-django-cas-ng==4.2.1
+https://github.com/django-cas-ng/django-cas-ng/archive/master.zip
 django-cors-headers==3.8.0
 djangorestframework==3.12.4
 idna==3.3
