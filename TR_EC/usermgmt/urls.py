@@ -12,5 +12,6 @@ urlpatterns = [
 #    path('countries/', views.country_list, name="countries"),
 #    path('accents/', views.accent_list, name="accents"),
 #    path('locale/<lang>', views.MenuLanguageView.as_view(), name="locale"),
-
+    path('login/', cas_views.LoginView.as_view(), name='cas_ng_login'),
+    path('logout/', cas_views.LogoutView.as_view(), name='cas_ng_logout'),
 ]

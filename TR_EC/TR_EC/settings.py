@@ -138,7 +138,7 @@ AUTHENTICATION_BACKENDS = [
     'django_cas_ng.backends.CASBackend',
 ]
 
-CAS_REDIRECT_URL = '/tr_ec/'
+CAS_REDIRECT_URL = '/'
 
 CAS_VERSION = '3'
 
