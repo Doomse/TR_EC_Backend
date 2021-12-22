@@ -25,3 +25,10 @@ class UserBasicSerializer(serializers.ModelSerializer):
         read_only_fields = ['id', 'username']
 
 
+class UsernameRegisterSerializer(serializers.ModelSerializer):
+    """
+    Is used to register taken usernames
+    """
+    class Meta():
+        model = models.CustomUser
+        fields = ['username']

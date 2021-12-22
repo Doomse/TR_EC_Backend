@@ -39,3 +39,11 @@ def check_username(request):
     username = request.query_params['username']
     available = not models.CustomUser.objects.filter(username=username).exists()
     return response.Response({'available': available}, status=status.HTTP_200_OK)
+
+
+class RegisterUsernameView(generics.CreateAPIView):
+    """
+    Is used by the authserver to add users to this database
+    """
+    serializer_class = serializers.UsernameRegisterSerializer
+    permission_classes = [rf_permissions.IsAdminUser]

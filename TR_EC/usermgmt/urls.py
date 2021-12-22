@@ -14,5 +14,6 @@ urlpatterns = [
 #    path('locale/<lang>', views.MenuLanguageView.as_view(), name="locale"),
     path('login/', cas_views.LoginView.as_view(), name='cas_ng_login'),
     path('logout/', cas_views.LogoutView.as_view(), name='cas_ng_logout'),
-    path('callback/', cas_views.CallbackView.as_view(), name='singe-logout'),
+    path('callback/', cas_views.CallbackView.as_view(), name='single-logout'),
+    path('register/', views.RegisterUsernameView.as_view(), name='register'),
 ]
